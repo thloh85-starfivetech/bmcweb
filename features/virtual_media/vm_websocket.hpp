@@ -562,10 +562,10 @@ inline void requestRoutes(App& app)
     }
     if constexpr (BMCWEB_VM_WEBSOCKET)
     {
-        BMCWEB_ROUTE(app, "/vm/0/0")
+        BMCWEB_ROUTE(app, "/vm/0/0/<str>")
             .privileges({{"ConfigureComponents", "ConfigureManager"}})
             .websocket()
-            .onopen([](crow::websocket::Connection& conn) {
+            .onopen([](crow::websocket::Connection& conn, const std::string& mediaType) {
                 BMCWEB_LOG_DEBUG("Connection {} opened", logPtr(&conn));
 
                 if (session != nullptr)
@@ -585,7 +585,7 @@ inline void requestRoutes(App& app)
                 // media is the last digit of the endpoint /vm/0/0. A future
                 // enhancement can include supporting different endpoint values.
                 const char* media = "0";
-                handler = std::make_shared<Handler>(media, getIoContext());
+                handler = std::make_shared<Handler>(media + " " + mediaType, getIoContext());
                 handler->connect();
             })
             .onclose([](crow::websocket::Connection& conn,
