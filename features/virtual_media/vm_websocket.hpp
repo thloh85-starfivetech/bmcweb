@@ -54,9 +54,9 @@ static constexpr auto nbdBufferSize = (128 * 1024 + 16) * 4;
 class Handler : public std::enable_shared_from_this<Handler>
 {
   public:
-    Handler(const std::string& media, boost::asio::io_context& ios) :
+    Handler(const std::string& media, const std::string& mediaType, boost::asio::io_context& ios) :
         pipeOut(ios), pipeIn(ios),
-        proxy(ios, "/usr/bin/nbd-proxy", {media},
+        proxy(ios, "/usr/bin/nbd-proxy", {media, mediaType},
               boost::process::v2::process_stdio{
                   .in = pipeIn, .out = pipeOut, .err = nullptr})
     {}
@@ -585,7 +585,7 @@ inline void requestRoutes(App& app)
                 // media is the last digit of the endpoint /vm/0/0. A future
                 // enhancement can include supporting different endpoint values.
                 const char* media = "0";
-                handler = std::make_shared<Handler>(media + " " + mediaType, getIoContext());
+                handler = std::make_shared<Handler>(media, mediaType, getIoContext());
                 handler->connect();
             })
             .onclose([](crow::websocket::Connection& conn,
