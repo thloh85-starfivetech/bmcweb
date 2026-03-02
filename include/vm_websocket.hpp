@@ -53,10 +53,10 @@ class Handler : public std::enable_shared_from_this<Handler>
         proxy.wait();
     }
 
-    void connect()
+    void connect(const std::string &mediaType)
     {
         std::error_code ec;
-        proxy = boost::process::child("/usr/bin/nbd-proxy", media,
+        proxy = boost::process::child("/usr/bin/nbd-proxy", {media, mediaType},
                                       boost::process::std_out > pipeOut,
                                       boost::process::std_in < pipeIn, ec);
         if (ec)
@@ -165,10 +165,12 @@ static std::shared_ptr<Handler> handler;
 
 inline void requestRoutes(App& app)
 {
-    BMCWEB_ROUTE(app, "/vm/0/0")
+    BMCWEB_ROUTE(app, "/vm/0/0/CD")
         .privileges({{"ConfigureComponents", "ConfigureManager"}})
         .websocket()
-        .onopen([](crow::websocket::Connection& conn) {
+        .onopen([](crow::websocket::Connection& conn
+				//, const std::string& mediaType
+				) {
         BMCWEB_LOG_DEBUG("Connection {} opened", logPtr(&conn));
 
         if (session != nullptr)
@@ -189,7 +191,8 @@ inline void requestRoutes(App& app)
         // enhancement can include supporting different endpoint values.
         const char* media = "0";
         handler = std::make_shared<Handler>(media, conn.getIoContext());
-        handler->connect();
+        //handler->connect(mediaType);
+        handler->connect("foo");
     })
         .onclose([](crow::websocket::Connection& conn,
                     const std::string& /*reason*/) {
